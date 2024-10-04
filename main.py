@@ -100,7 +100,7 @@ def decrypt_file(file_path, master_password):
 def add_account(data):
     new_account = get_user_input()
     data['accounts'].append(new_account)
-    print("\nadded successfully\n")
+    print("\nadded\n")
 
 def find_account(data, search_term):
     if search_term == '*':
@@ -137,7 +137,7 @@ def change_account(data, website):
             return
     
     selected_account = results[int(choice) - 1]
-
+    print(f"\n------ site: {selected_account.get('website')} ------")
     print("enter new details. leave blank to keep current value")
     
     new_email = input(f"\nemail ({selected_account.get('email')}): ").strip()
@@ -154,7 +154,7 @@ def change_account(data, website):
     if new_passphrase:
         selected_account['passphrase'] = new_passphrase
 
-    print("updated")
+    print("\nupdated\n")
 
 def delete_account(data, website):
     if website == '*':
@@ -318,6 +318,7 @@ $$$$$$$$/  $$$$$$$/ $$$$$$$/   $$$$$$$/  $$$$$$/  $$$$$$$/
                 remote_url = input("repository URL: ").strip()
                 commit_message = input("commit message: ").strip()
             else:
+                remote_url = open('remote_url', 'r').read().strip()
                 if has_changes():
                     commit_message = input("commit message: ").strip()
                 else:
