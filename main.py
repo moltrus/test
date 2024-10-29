@@ -2,7 +2,7 @@ import os
 import re
 import yaml
 import subprocess
-from json import dumps
+import getpass
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
@@ -12,19 +12,20 @@ from cryptography.hazmat.backends import default_backend
 def get_user_input():
 
     website = input("\nwebsite: ")
-    if not website:
-        website = None
+    while not website:
+        print("website can't be empty")
+        password = input("website: ")
 
     email = input("\nemail: ")
-    if email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+    while email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         print("Invalid email format")
-        return get_user_input()
+        email = input("email: ")
     if not email:
-        email = None
+        email = ''
 
     username = input("\nusername: ")
     if not username:
-        username = None
+        username = ''
 
     password = input("\npassword: ")
     while not password:
@@ -33,7 +34,7 @@ def get_user_input():
 
     passphrase = input("\npassphrase: ")
     if not passphrase:
-        passphrase = None
+        passphrase = ''
 
     return {
         'email': email,
@@ -104,15 +105,18 @@ def add_account(data):
 
 def find_account(data, search_term):
     if search_term == '*':
-        return dumps(data['accounts'], indent=4)
-    
+        return data['accounts']
+
+    if search_term == '':
+        return None
+
     results = []
     for account in data['accounts']:
         if (search_term.lower() in account.get('website', '').lower() or
                 search_term.lower() in account.get('username', '').lower()):
             results.append(account)
     if results:
-        return dumps(results, indent=4)
+        return results
     return None
 
 def change_account(data, website):
@@ -135,11 +139,11 @@ def change_account(data, website):
         if not choice.isdigit() or int(choice) < 1 or int(choice) > len(results):
             print("invalid")
             return
-    
+
     selected_account = results[int(choice) - 1]
     print(f"\n------ site: {selected_account.get('website')} ------")
     print("enter new details. leave blank to keep current value")
-    
+
     new_email = input(f"\nemail ({selected_account.get('email')}): ").strip()
     new_username = input(f"\nusername ({selected_account.get('username')}): ").strip()
     new_password = input("\npassword: ").strip()
@@ -170,7 +174,7 @@ def delete_account(data, website):
     for account in data['accounts']:
         if website.lower() in account.get('website', '').lower():
             results.append(account)
-    
+
     if not results:
         print("does not exist")
         return
@@ -187,10 +191,18 @@ def delete_account(data, website):
     if not choice.isdigit() or int(choice) < 1 or int(choice) > len(results):
         print("invalid")
         return
-    
+
     selected_account = results[int(choice) - 1]
     data['accounts'].remove(selected_account)
     print("deleted")
+
+def pretty_print(data):
+    print()
+    for item in data:
+        for key, value in item.items():
+            if value:
+                print(" "*4+f"{key}: {value}")
+        print()
 
 def add_to_yaml(data, master_password):
     with open('zapdos.yaml', 'w') as file:
@@ -248,7 +260,7 @@ def sync_with_remote(commit_message, remote_url):
 
 def main():
     try:
-        master_password = input("master password: ")
+        master_password = getpass.getpass("master password: ")
     except KeyboardInterrupt:
         exit()
 
@@ -296,7 +308,7 @@ $$$$$$$$/  $$$$$$$/ $$$$$$$/   $$$$$$$/  $$$$$$/  $$$$$$$/
             website = input("\nsearch: ").strip()
             account = find_account(data, website)
             if account:
-                print(account)
+                pretty_print(account)
             else:
                 print("not found")
 
