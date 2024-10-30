@@ -37,11 +37,11 @@ def get_user_input():
         passphrase = ''
 
     return {
+        'website': website,
         'email': email,
         'username': username,
         'password': password,
-        'passphrase': passphrase,
-        'website': website
+        'passphrase': passphrase
     }
 
 
