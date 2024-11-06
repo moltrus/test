@@ -14,7 +14,7 @@ def get_user_input():
     website = input("\nwebsite: ")
     while not website:
         print("website can't be empty")
-        password = input("website: ")
+        website = input("website: ")
 
     email = input("\nemail: ")
     while email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
