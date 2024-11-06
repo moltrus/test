@@ -329,13 +329,14 @@ $$$$$$$$/  $$$$$$$/ $$$$$$$/   $$$$$$$/  $$$$$$/  $$$$$$$/
             if not os.path.exists('remote_url'):
                 remote_url = input("repository URL: ").strip()
                 commit_message = input("commit message: ").strip()
+                sync_with_remote(commit_message, remote_url)
             else:
                 remote_url = open('remote_url', 'r').read().strip()
                 if has_changes():
                     commit_message = input("commit message: ").strip()
+                    sync_with_remote(commit_message, remote_url)
                 else:
                     print("all synced")
-            sync_with_remote(commit_message, remote_url)
 
         elif choice in ['exit', '6', 'e']:
             break
