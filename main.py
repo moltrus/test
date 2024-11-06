@@ -219,7 +219,7 @@ def init_repo():
 
 def add_files():
     try:
-        subprocess.run(['git', 'add', '.'], check=True)
+        subprocess.run(['git', 'add', 'zapdos.yaml.enc'], check=True)
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while adding files to the git repository: {e}")
 
