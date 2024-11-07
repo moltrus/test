@@ -137,7 +137,7 @@ def change_account(data, website):
     if len(results) != 1:
 
         for idx, account in enumerate(results):
-            print(f"\nID: {idx + 1}\n--------\n{account.get('website')}\n--------\nemail: {account.get('email')}\nusername: {account.get('username')}\npassword: {account.get('password')}\npassphrase: {account.get('passphrase')}")
+            print(f"\n ID: {idx + 1}\n\t--------\n\t{account.get('website')}\n\t--------\n\t\temail: {account.get('email')}\n\t\tusername: {account.get('username')}\n\t\tpassword: {account.get('password')}\n\t\tpassphrase: {account.get('passphrase')}")
 
         choice = input("\nID number to change: ").strip()
         if not choice.isdigit() or int(choice) < 1 or int(choice) > len(results):
@@ -189,7 +189,7 @@ def delete_account(data, website):
         return
 
     for idx, account in enumerate(results):
-        print(f"\nID: {idx + 1}\n--------\n{account.get('website')}\n--------\nemail: {account.get('email')}\nusername: {account.get('username')}\npassword: {account.get('password')}\npassphrase: {account.get('passphrase')}")
+        print(f"\n ID: {idx + 1}\n\t--------\n\t{account.get('website')}\n\t--------\n\t\temail: {account.get('email')}\n\t\tusername: {account.get('username')}\n\t\tpassword: {account.get('password')}\n\t\tpassphrase: {account.get('passphrase')}")
 
     choice = input("\nID number to delete: ").strip()
     if not choice.isdigit() or int(choice) < 1 or int(choice) > len(results):
