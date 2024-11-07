@@ -112,6 +112,10 @@ def find_account(data, search_term):
 
     results = []
     for account in data['accounts']:
+        if re.match(r"[^@]+@[^@]+\.[^@]+", search_term.lower()):
+            if search_term.lower() in account.get('email', '').lower():
+                results.append(account)
+
         if (search_term.lower() in account.get('website', '').lower() or
                 search_term.lower() in account.get('username', '').lower()):
             results.append(account)
