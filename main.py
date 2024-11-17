@@ -259,12 +259,23 @@ def push_repo(remote_url, is_init=False):
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while pushing files to the git repository: {e}")
 
-def has_changes():
+def has_remote_changes():
     try:
+        subprocess.run(['git', 'fetch'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         result = subprocess.run(['git', 'status', '--porcelain'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
         if result.stdout.decode().strip() == 'M zapdos.yaml.enc' or result.stdout.decode().strip() == '?? zapdos.yaml.enc':
             return True
+
+        local_commit = subprocess.run(['git', 'rev-parse', 'HEAD'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        remote_commit = subprocess.run(['git', 'rev-parse', 'origin/master'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        local_commit_hash = local_commit.stdout.decode().strip()
+        remote_commit_hash = remote_commit.stdout.decode().strip()
+
+        if local_commit_hash != remote_commit_hash:
+            return True
         return False
+
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while checking for changes: {e}")
         return False
@@ -352,7 +363,7 @@ $$$$$$$$/  $$$$$$$/ $$$$$$$/   $$$$$$$/  $$$$$$/  $$$$$$$/
                 push_repo(remote_url, is_init=False)
             else:
                 remote_url = open('remote_url', 'r').read().strip()
-                if has_changes():
+                if has_remote_changes():
                     add_files()
                     push_repo(remote_url, is_init=False)
                 else:
