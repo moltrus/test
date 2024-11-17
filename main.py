@@ -98,10 +98,13 @@ def decrypt_file(file_path, master_password):
         print("incorrect master password")
         return None
 
-def add_account(data):
+def add_account(data, master_password):
     new_account = get_user_input()
     data['accounts'].append(new_account)
     print("\nadded\n")
+    add_to_yaml(data, master_password)
+    add_files()
+    commit_repo(f"added {new_account.get('website').split('.')[0]}")
 
 def find_account(data, search_term):
     if search_term == '*':
@@ -123,7 +126,7 @@ def find_account(data, search_term):
         return results
     return None
 
-def change_account(data, website):
+def change_account(data, website, master_password):
     results = []
     for account in data['accounts']:
         if website.lower() in account.get('website', '').lower():
@@ -163,8 +166,11 @@ def change_account(data, website):
         selected_account['passphrase'] = new_passphrase
 
     print("\nupdated\n")
+    add_to_yaml(data, master_password)
+    add_files()
+    commit_repo(f"updated {selected_account.get('website').split('.')[0]}")
 
-def delete_account(data, website):
+def delete_account(data, website, master_password):
     if website == '*':
         confirm = input("sure you wanna delete all? (yes/no): ").strip().lower()
         if confirm in ['yes','y']:
@@ -172,6 +178,9 @@ def delete_account(data, website):
             print("all deleted")
         else:
             print("cancelled")
+        add_to_yaml(data, master_password)
+        add_files()
+        commit_repo("deleted all accounts")
         return
 
     results = []
@@ -186,6 +195,9 @@ def delete_account(data, website):
     if len(results) == 1:
         data['accounts'].remove(results[0])
         print("deleted")
+        add_to_yaml(data, master_password)
+        add_files()
+        commit_repo(f"deleted {results[0].get('website').split('.')[0]}")
         return
 
     for idx, account in enumerate(results):
@@ -199,6 +211,9 @@ def delete_account(data, website):
     selected_account = results[int(choice) - 1]
     data['accounts'].remove(selected_account)
     print("deleted")
+    add_to_yaml(data, master_password)
+    add_files()
+    commit_repo(f"deleted {selected_account.get('website').split('.')[0]}")
 
 def pretty_print(data):
     print()
@@ -217,13 +232,16 @@ def add_to_yaml(data, master_password):
 
 def init_repo():
     try:
-        subprocess.run(['git', 'init'], check=True)
+        subprocess.run(['git', 'init'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while initializing the git repository: {e}")
 
-def add_files():
+def add_files(is_init=False):
     try:
-        subprocess.run(['git', 'add', 'zapdos.yaml.enc'], check=True)
+        if is_init:
+            subprocess.run(['git', 'add', '.'], check=True)
+        else:
+            subprocess.run(['git', 'add', 'zapdos.yaml.enc'], check=True)
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while adding files to the git repository: {e}")
 
@@ -235,7 +253,7 @@ def commit_repo(commit_message):
 
 def push_repo(remote_url, is_init=False):
     try:
-        if not is_init:
+        if is_init:
             subprocess.run(['git', 'remote', 'add', 'origin', remote_url], check=True)
         subprocess.run(['git', 'push', '-u', 'origin', 'master'], check=True)
     except subprocess.CalledProcessError as e:
@@ -243,24 +261,19 @@ def push_repo(remote_url, is_init=False):
 
 def has_changes():
     try:
-        result = subprocess.run(['git', 'status', '--porcelain'], check=True, stdout=subprocess.PIPE)
-        if result.stdout:
+        result = subprocess.run(['git', 'status', '--porcelain'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.stdout.decode().strip() == 'M zapdos.yaml.enc' or result.stdout.decode().strip() == '?? zapdos.yaml.enc':
             return True
         return False
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while checking for changes: {e}")
         return False
 
-def sync_with_remote(commit_message, remote_url):
-    init_repo()
-    add_files()
-    commit_repo(commit_message)
+def get_remote_url():
     if os.path.exists('remote_url'):
-        push_repo(remote_url, is_init=True)
-    else:
-        with open('remote_url', 'w') as file:
-            file.write(remote_url)
-        push_repo(remote_url, is_init=False)
+        with open('remote_url', 'r') as file:
+            return file.read().strip()
+    return None
 
 def main():
     try:
@@ -272,6 +285,7 @@ def main():
         with open('.gitignore', 'w') as file:
             file.write('remote_url')
             file.flush()
+        init_repo()
 
     if os.path.exists('zapdos.yaml.enc'):
         data = decrypt_file('zapdos.yaml.enc', master_password)
@@ -305,8 +319,7 @@ $$$$$$$$/  $$$$$$$/ $$$$$$$/   $$$$$$$/  $$$$$$/  $$$$$$$/
             exit()
 
         if choice in ['add', '1', 'a']:
-            add_account(data)
-            add_to_yaml(data, master_password)
+            add_account(data, master_password)
 
         elif choice in ['find', '2', 'f']:
             website = input("\nsearch: ").strip()
@@ -318,27 +331,30 @@ $$$$$$$$/  $$$$$$$/ $$$$$$$/   $$$$$$$/  $$$$$$/  $$$$$$$/
 
         elif choice in ['change', '3', 'c']:
             website = input("website: ").strip()
-            change_account(data, website)
-            add_to_yaml(data, master_password)
+            change_account(data, website, master_password)
 
         elif choice in ['delete', '4', 'd']:
             website = input("website to delete: ").strip()
-            delete_account(data, website)
-            add_to_yaml(data, master_password)
+            delete_account(data, website, master_password)
 
         elif choice in ['sync', '5', 's']:
             if not os.path.exists('.git'):
+                print("Initing repo")
                 init_repo()
 
             if not os.path.exists('remote_url'):
+                print('Remote URL not found')
                 remote_url = input("repository URL: ").strip()
-                commit_message = input("commit message: ").strip()
-                sync_with_remote(commit_message, remote_url)
+                with open('remote_url', 'w') as file:
+                    file.write(remote_url)
+                add_files(is_init=True)
+                commit_repo("initial commit")
+                push_repo(remote_url, is_init=False)
             else:
                 remote_url = open('remote_url', 'r').read().strip()
                 if has_changes():
-                    commit_message = input("commit message: ").strip()
-                    sync_with_remote(commit_message, remote_url)
+                    add_files()
+                    push_repo(remote_url, is_init=False)
                 else:
                     print("all synced")
 
