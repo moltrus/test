@@ -18,7 +18,7 @@ def get_user_input():
 
     email = input("\nemail: ")
     while email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-        print("Invalid email format")
+        print("invalid email format")
         email = input("email: ")
     if not email:
         email = ''
